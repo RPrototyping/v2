@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>シチイレ ― 約束の担保</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Zen+Old+Mincho:wght@700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: 友だち同士の軽さと、封をする瞬間の緊張感
+   IDEA: 質屋の預かり札 × 封蝋をした手紙
+   PICTURE: 朱の封蝋をした大きな封筒。守れば燃え、破れば封が開いて担保が出てくる
+   COLOUR and TYPE: 白い紙・墨・朱の封蝋・クラフト紙の封筒 / Zen Kaku Gothic New、封蝋の字だけ明朝
+   LAYOUT: 左に信頼残高と約束一覧、右に詳細。760px以下は縦積み */
+:root{color-scheme:light dark;
+  --bg:light-dark(#ffffff,#141312);--paper:light-dark(#f8f5f0,#1e1c1a);
+  --ink:light-dark(#1d1b1a,#f2efe9);--sub:light-dark(#6b6660,#aaa39a);
+  --line:light-dark(#e6e0d6,#34302c);--shu:light-dark(#d23a22,#ff6c50);
+  --shu-soft:light-dark(#fbe3dd,#3a1d17);--ok:light-dark(#2d6a4f,#7dd3a8);--ok-soft:light-dark(#dcefe4,#17291f);
+  --env:light-dark(#d9b98c,#a88a62);--env-d:light-dark(#c4a072,#8a6f4c);--env-f:light-dark(#e6c99f,#b89a70);--letter:#fffdf8}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;overflow-x:clip}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--bg);border-radius:10px;min-height:44px;padding:0 16px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--shu);outline-offset:2px}
+.top{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 18px;padding:20px max(4vw,16px) 14px;border-bottom:2px solid var(--ink)}
+.top h1{margin:0;font-size:32px;line-height:1.05;font-weight:900}
+.top h1 small{font-size:17px;font-weight:700;color:var(--sub);margin-left:.4em}
+.top p{margin:0;color:var(--sub)}
+.app{display:grid;grid-template-columns:300px minmax(0,1fr);max-width:1240px;margin:0 auto}
+aside{border-right:1px solid var(--line);padding:20px 16px;display:flex;flex-direction:column;gap:10px}
+.bal{padding:14px 16px;border-radius:14px;background:var(--ink);color:var(--bg)}
+.bal small{display:block;font-size:13px;opacity:.75}
+.bal b{font-size:44px;line-height:1.1;font-weight:900;font-variant-numeric:tabular-nums}
+.bal .who{display:grid;gap:6px;margin-top:8px;font-size:13px}
+.who div{display:grid;grid-template-columns:4.5em 1fr 3.4em;gap:8px;align-items:center}
+.who i{display:block;height:6px;border-radius:3px;background:#ffffff33;overflow:hidden}.who i span{display:block;height:100%;background:var(--shu)}
+.who em{font-style:normal;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.card{display:block;width:100%;text-align:left;padding:12px 14px;border-radius:12px;background:var(--paper);border:1px solid var(--line);min-height:auto}
+.card[aria-current=true]{border-color:var(--ink);box-shadow:inset 4px 0 0 var(--shu)}
+.card b{display:block;font-size:16px;line-height:1.4}.card small{color:var(--sub);font-size:13px}
+.tag{display:inline-block;font-size:13px;padding:1px 9px;border-radius:99px;background:var(--line);margin-right:6px;white-space:nowrap}
+.tag.active{background:var(--paper);border:1px solid var(--line)}.tag.due{background:var(--ink);color:var(--bg)}
+.tag.kept{background:var(--ok-soft);color:var(--ok)}.tag.broken{background:var(--shu-soft);color:var(--shu)}
+.new{border-style:dashed;font-weight:700}
+.detail{padding:24px clamp(16px,3vw,40px) 48px}
+.head h2{margin:0;font-size:clamp(26px,3.6vw,40px);line-height:1.15;text-wrap:balance}
+.meta{display:flex;flex-wrap:wrap;gap:6px 18px;margin:8px 0 0;color:var(--sub)}
+.meta b{color:var(--ink)}
+.stage{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:28px;align-items:center;margin-top:20px}
+.pic{padding:110px 0 10px;display:grid;place-items:center}
+.env{position:relative;width:min(400px,100%);aspect-ratio:3/2}
+.env>div{position:absolute}
+.back{inset:0;background:var(--env-d);border-radius:8px}
+.letter{left:7%;right:7%;top:6%;height:88%;background:var(--letter);color:#1d1b1a;border-radius:4px;padding:16px 18px;box-shadow:0 2px 8px #0002;transition:top .9s cubic-bezier(.3,1.4,.5,1) .35s;z-index:1}
+.letter small{display:block;font-size:12px;color:#8a837a}
+.letter p{margin:6px 0 0;font-size:clamp(17px,2.2vw,21px);font-weight:700;line-height:1.45}
+.front{inset:0;background:var(--env);border-radius:8px;clip-path:polygon(0 0,50% 52%,100% 0,100% 100%,0 100%);z-index:2}
+.flap{left:0;right:0;top:0;height:56%;background:var(--env-f);clip-path:polygon(0 0,100% 0,50% 100%);transform-origin:top;transition:transform .5s ease;z-index:3}
+.seal{left:50%;top:56%;width:68px;height:68px;margin:-34px 0 0 -34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff7a5c,var(--shu) 55%,#8f2312);color:#fff;display:grid;place-items:center;font:700 28px/1 "Zen Old Mincho",serif;box-shadow:0 3px 0 #0003;z-index:4;transition:transform .4s,opacity .4s}
+.env.open .flap{transform:rotateX(180deg);z-index:0}
+.env.open .seal{transform:scale(.4) rotate(40deg);opacity:0}
+.env.open .letter{top:-62%;z-index:1}
+.env.open .front{z-index:2}
+.env.burning{animation:burn 1.8s ease-in forwards}
+.env.burning::after{content:"";position:absolute;left:-6%;right:-6%;height:26%;bottom:-6%;background:radial-gradient(ellipse at 50% 60%,#ffd25a 0,#ff7a2a 40%,#d23a2200 72%);filter:blur(6px);animation:flame 1.8s ease-in forwards;z-index:9}
+@keyframes burn{0%{clip-path:inset(0 0 0 0);filter:none}60%{filter:sepia(.6) brightness(.8)}100%{clip-path:inset(0 0 100% 0);filter:sepia(1) brightness(.4)}}
+@keyframes flame{0%{bottom:-6%;opacity:1}100%{bottom:94%;opacity:.2}}
+.ash{width:min(400px,100%);aspect-ratio:3/2;display:grid;place-items:end center;position:relative}
+.ash svg{width:100%;height:46%}
+.ash p{position:absolute;inset:auto 0 52% 0;text-align:center;margin:0;color:var(--sub);font-weight:700}
+.panel{display:grid;gap:12px}
+.panel h3{margin:0;font-size:18px}
+.panel p{margin:0}
+.hint{font-size:14px;color:var(--sub)}
+.big{font-size:18px;font-weight:700;min-height:56px;padding:0 20px;flex:1 1 150px}
+.big.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.big.shu{background:var(--shu);border-color:var(--shu);color:#fff}
+.big.ink{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.result{padding:16px 18px;border-radius:14px;border:1px solid var(--line);background:var(--paper)}
+.result b{display:block;font-size:24px;line-height:1.3;font-weight:900}
+.result.kept b{color:var(--ok)}.result.broken b{color:var(--shu)}
+.count{font-size:clamp(28px,3.4vw,38px);font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums}
+form{display:grid;gap:14px;max-width:640px}
+label{display:grid;gap:4px;font-size:14px;color:var(--sub)}
+input[type=text],input[type=datetime-local]{font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);min-height:44px;width:100%}
+.chk{display:flex;gap:10px;align-items:flex-start;color:var(--ink);font-size:15px}
+.chk input{width:22px;height:22px;margin-top:2px;flex:none}
+.err{color:var(--shu);font-size:14px;margin:0}
+.formgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,320px);gap:28px;align-items:start}
+.formgrid .pic{padding-top:120px}
+footer{max-width:1240px;margin:0 auto;padding:16px max(4vw,16px) 40px;color:var(--sub);font-size:13px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;border-top:1px solid var(--line)}
+@media(max-width:860px){.stage,.formgrid{grid-template-columns:minmax(0,1fr)}.formgrid .pic{order:-1;padding-top:100px}}
+@media(max-width:760px){.app{grid-template-columns:minmax(0,1fr)}aside{border-right:0;border-bottom:1px solid var(--line);flex-direction:row;overflow-x:auto;padding:14px 16px;align-items:stretch}aside>*{flex:0 0 220px}aside .bal{flex-basis:250px}}
+@media(max-width:600px){.top h1{font-size:28px}.pic{padding-top:120px}.formgrid .pic{padding-top:150px;margin-top:8px}.env.open .letter{top:-46%}}
+@media(prefers-reduced-motion:reduce){.env.burning,.env.burning::after{animation-duration:.01s}.letter,.flap,.seal{transition:none}}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>シチイレ<small>約束の担保</small></h1>
+  <p>約束に、質（しち）を入れる。守れば担保は燃え、破れば封が開く。</p>
+</header>
+
+<div class="app">
+  <aside id="side" aria-label="信頼残高と約束の一覧"></aside>
+  <main class="detail" id="main"></main>
+</div>
+
+<footer>
+  <span>プロトタイプ：1台で「自分」と「相手」の両方を操作します。最初に入っている4件はデモ用のサンプルで、記録はこのブラウザの中だけに保存されます。</span>
+  <span id="resetArea"></span>
+</footer>
+
+<script>
+{
+const KEY = 'shichiire.v1';
+const $ = s => document.querySelector(s);
+const esc = v => String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Math.random().toString(36).slice(2, 10);
+const pad = n => String(n).padStart(2, '0');
+const localISO = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const fmt = iso => { const d = new Date(iso); return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const shift = (days, h, m = 0) => { const d = new Date(); d.setDate(d.getDate() + days); if (h != null) d.setHours(h, m, 0, 0); return localISO(d); };
+
+function sample() {
+  const now = Date.now();
+  return {promises: [
+    {id:'s1', title:'明日の1限に遅刻しない', partner:'たけし', due:shift(1, 9, 0), collateral:'小6までサンタを本気で信じてた', status:'active', createdAt:now},
+    {id:'s2', title:'貸したマンガを今週中に返す', partner:'そうた', due:shift(0, new Date().getHours() - 1), collateral:'カラオケの十八番がアニメのOP', status:'active', createdAt:now - 6e8},
+    {id:'s3', title:'金曜までにレポートの下書きを送る', partner:'みさき', due:shift(-3, 23, 59), collateral:'（燃えたため記録なし）', status:'kept', createdAt:now - 9e8, resolvedAt:now - 2e8},
+    {id:'s4', title:'今週はジムに2回行く', partner:'たけし', due:shift(-6, 21, 0), collateral:'中学のころノートにポエムを書いてた', status:'broken', createdAt:now - 12e8, resolvedAt:now - 5e8}
+  ]};
+}
+function load() { try { const v = JSON.parse(localStorage.getItem(KEY)); return v && Array.isArray(v.promises) ? v : null; } catch { return null; } }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} }
+
+let S = load() || sample();
+let sel = S.promises[0] ? S.promises[0].id : null;
+let mode = S.promises.length ? 'view' : 'new';
+let confirmJudge = null;   // 'kept' | 'broken'
+let anim = null;           // {id, type}
+let confirmReset = false;
+let draft = {title:'', partner:'', due:shift(1, 21, 0), collateral:'', ok:false}, formErr = '';
+
+const state = p => p.status !== 'active' ? p.status : (new Date(p.due) < new Date() ? 'due' : 'active');
+const LABEL = {active:'進行中', due:'判定待ち', kept:'守った', broken:'破った'};
+function left(iso) {
+  let ms = new Date(iso) - new Date(); if (ms <= 0) return null;
+  const d = Math.floor(ms / 864e5), h = Math.floor(ms % 864e5 / 36e5), m = Math.floor(ms % 36e5 / 6e4);
+  return d ? `${d}日 ${h}時間` : h ? `${h}時間 ${m}分` : `${m}分`;
+}
+
+/* ---------- 封筒 ---------- */
+function envelope(p, kind, text) {
+  const cls = kind === 'open' ? 'env open' : kind === 'burning' ? 'env burning' : 'env';
+  const body = kind === 'open' ? `<small>担保 ― ${esc(p.partner)}さんに公開されました</small><p>${esc(text)}</p>`
+                              : `<small>担保</small><p style="color:#bbb">封印中</p>`;
+  return `<div class="${cls}" role="img" aria-label="${kind === 'open' ? '封が開いた封筒' : '封をした封筒'}">
+    <div class="back"></div><div class="letter">${body}</div><div class="front"></div><div class="flap"></div><div class="seal">質</div></div>`;
+}
+const ash = () => `<div class="ash" role="img" aria-label="燃えて灰になった封筒"><p>担保は燃えました。<br>中身はもう誰にも読めません。</p>
+  <svg viewBox="0 0 400 120" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+    <ellipse cx="200" cy="112" rx="170" ry="8" fill="currentColor" opacity=".08"/>
+    ${[[110,96,26],[150,100,40],[200,92,34],[246,99,30],[284,102,20],[176,104,22],[226,106,18]].map(([x,y,w],i)=>`<path d="M${x-w} ${y+8} L${x-w/3} ${y-6+i%3*3} L${x+w/2} ${y} L${x+w} ${y+8} Z" fill="${i%2?'#6b6660':'#8a837a'}" opacity=".8"/>`).join('')}
+    <circle cx="200" cy="98" r="9" fill="#8f2312" opacity=".55"/>
+  </svg></div>`;
+
+/* ---------- 描画 ---------- */
+function renderSide() {
+  const done = S.promises.filter(p => p.status !== 'active');
+  const kept = done.filter(p => p.status === 'kept').length;
+  const rate = done.length ? Math.round(kept / done.length * 100) : null;
+  const names = [...new Set(done.map(p => p.partner))];
+  const who = names.map(n => {
+    const d = done.filter(p => p.partner === n), k = d.filter(p => p.status === 'kept').length;
+    return `<div><span>${esc(n)}</span><i><span style="width:${k / d.length * 100}%"></span></i><em>${k}/${d.length}</em></div>`;
+  }).join('');
+  const order = {due:0, active:1, broken:2, kept:3};
+  const cards = S.promises.slice().sort((a, b) => order[state(a)] - order[state(b)] || a.due.localeCompare(b.due)).map(p => {
+    const st = state(p);
+    return `<button type="button" class="card" data-act="sel" data-id="${esc(p.id)}" aria-current="${mode === 'view' && p.id === sel}">
+      <b>${esc(p.title)}</b><span class="tag ${st}">${LABEL[st]}</span><small>${esc(p.partner)}さん・${fmt(p.due)}</small></button>`;
+  }).join('');
+  $('#side').innerHTML = `<div class="bal"><small>あなたの信頼残高（守った ÷ 判定済み）</small><b>${rate == null ? '—' : rate + '%'}</b><small>${kept}/${done.length} 回守った</small>${who ? `<div class="who">${who}</div>` : ''}</div>
+    <button type="button" class="new" data-act="new">＋ 新しい約束</button>${cards}`;
+}
+
+function renderView() {
+  const p = S.promises.find(x => x.id === sel);
+  if (!p) { mode = 'new'; return renderNew(); }
+  const st = state(p);
+  const a = anim && anim.id === p.id ? anim.type : null;
+  let pic, panel;
+  if (p.status === 'kept') pic = a === 'burn' ? envelope(p, 'burning') : ash();
+  else if (p.status === 'broken') pic = envelope(p, 'open', p.collateral);
+  else pic = envelope(p, 'sealed');
+
+  if (st === 'active' || st === 'due') {
+    const l = left(p.due);
+    const judge = confirmJudge
+      ? `<p><b>本当に「${confirmJudge === 'kept' ? '守った' : '破った'}」にしますか？</b> 判定は取り消せません。${confirmJudge === 'kept' ? '担保は燃えて消えます。' : '封が開き、担保が公開されます。'}</p>
+         <div class="row"><button type="button" class="big ${confirmJudge === 'kept' ? 'ok' : 'shu'}" data-act="judgeYes">${confirmJudge === 'kept' ? '燃やす' : '封を開ける'}</button><button type="button" data-act="judgeNo">やめる</button></div>`
+      : `<div class="row"><button type="button" class="big ok" data-act="judge" data-v="kept">守った</button><button type="button" class="big shu" data-act="judge" data-v="broken">破った</button></div>`;
+    panel = `<div><p class="hint">${l ? '期限まで' : '期限を過ぎました'}</p><p class="count">${l ? 'あと ' + l : '判定待ち'}</p></div>
+      <p>担保は封印されています。書いた本人も、${esc(p.partner)}さんも、まだ読めません。</p>
+      <h3>${esc(p.partner)}さんが判定する</h3>
+      <p class="hint">プロトタイプでは、相手の判定もこの画面で操作します。</p>${judge}`;
+  } else if (p.status === 'kept') {
+    panel = `<div class="result kept"><b>約束を守りました</b><p>担保は燃えて、誰にも読まれずに消えました。${esc(p.partner)}さんからの信頼が1つ増えました。</p></div>`;
+  } else {
+    panel = `<div class="result broken"><b>約束が破られました</b><p>封が開き、担保が${esc(p.partner)}さんに公開されました。</p></div>
+      <p class="hint">次の約束で、信頼を取り戻しましょう。</p>`;
+  }
+  $('#main').innerHTML = `<div class="head"><h2>${esc(p.title)}</h2>
+      <p class="meta"><span>相手 <b>${esc(p.partner)}さん</b></span><span>期限 <b>${fmt(p.due)}</b></span><span class="tag ${st}">${LABEL[st]}</span></p></div>
+    <div class="stage"><div class="pic">${pic}</div><div class="panel" aria-live="polite">${panel}</div></div>`;
+  if (a === 'burn') setTimeout(() => { anim = null; render(); }, 1900);
+  if (a === 'open') anim = null;
+}
+
+function renderNew() {
+  const prev = {id:'', partner:draft.partner || '相手'};
+  $('#main').innerHTML = `<div class="head"><h2>新しい約束</h2><p class="meta">担保は「破ったら相手に見られてもいいけど、できれば見られたくない一言」にしましょう。</p></div>
+    <div class="formgrid">
+      <form id="newForm" novalidate>
+        <label>約束すること<input type="text" id="fTitle" maxlength="40" value="${esc(draft.title)}" placeholder="例：明日の1限に遅刻しない"></label>
+        <label>約束する相手<input type="text" id="fPartner" maxlength="12" value="${esc(draft.partner)}" placeholder="例：たけし"></label>
+        <label>期限<input type="datetime-local" id="fDue" value="${esc(draft.due)}"></label>
+        <label>担保の一言（40字まで）<input type="text" id="fCol" maxlength="40" value="${esc(draft.collateral)}" placeholder="例：小6までサンタを本気で信じてた"></label>
+        <label class="chk"><input type="checkbox" id="fOk" ${draft.ok ? 'checked' : ''}><span>約束を破ったら、この一言が相手に公開されることに同意します。他人の秘密や悪口は書きません。</span></label>
+        ${formErr ? `<p class="err" role="alert">${esc(formErr)}</p>` : ''}
+        <div class="row"><button type="submit" class="big ink">封をする</button>${S.promises.length ? '<button type="button" data-act="cancel">やめる</button>' : ''}</div>
+        <p class="hint">封をすると、担保は自分にも表示されなくなります。</p>
+      </form>
+      <div class="pic">${envelope(prev, 'open', draft.collateral || 'ここに担保の一言が入ります')}</div>
+    </div>`;
+}
+
+function renderReset() {
+  $('#resetArea').innerHTML = confirmReset
+    ? `<span class="row">いまの約束を消して、サンプルに戻しますか？<button type="button" data-act="resetYes">戻す</button><button type="button" data-act="resetNo">やめる</button></span>`
+    : `<button type="button" data-act="reset">サンプルに戻す</button>`;
+}
+function render() { renderSide(); mode === 'new' ? renderNew() : renderView(); renderReset(); }
+
+/* ---------- 操作 ---------- */
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-act]'); if (!t) return;
+  const act = t.dataset.act;
+  if (act === 'sel') { sel = t.dataset.id; mode = 'view'; confirmJudge = null; anim = null; }
+  else if (act === 'new') { mode = 'new'; formErr = ''; draft = {title:'', partner:'', due:shift(1, 21, 0), collateral:'', ok:false}; }
+  else if (act === 'cancel') { mode = 'view'; }
+  else if (act === 'judge') confirmJudge = t.dataset.v;
+  else if (act === 'judgeNo') confirmJudge = null;
+  else if (act === 'judgeYes') {
+    const p = S.promises.find(x => x.id === sel);
+    if (p && p.status === 'active') {
+      p.status = confirmJudge; p.resolvedAt = Date.now();
+      if (p.status === 'kept') p.collateral = '';   // 燃えたので中身は残さない
+      anim = {id:p.id, type:p.status === 'kept' ? 'burn' : 'open'}; save();
+    }
+    confirmJudge = null;
+    if (anim && anim.type === 'open') {           // 閉じた状態を一度描いてから開く
+      render(); const env = document.querySelector('.env');
+      if (env) { env.classList.remove('open'); requestAnimationFrame(() => requestAnimationFrame(() => env.classList.add('open'))); }
+      return;
+    }
+  }
+  else if (act === 'reset') confirmReset = true;
+  else if (act === 'resetNo') confirmReset = false;
+  else if (act === 'resetYes') { S = sample(); sel = S.promises[0].id; mode = 'view'; confirmReset = false; anim = null; confirmJudge = null; save(); }
+  else return;
+  render();
+});
+document.addEventListener('input', e => {
+  if (!e.target.closest('#newForm')) return;
+  draft = {title:$('#fTitle').value, partner:$('#fPartner').value, due:$('#fDue').value, collateral:$('#fCol').value, ok:$('#fOk').checked};
+  if (e.target.id === 'fCol' || e.target.id === 'fPartner') {
+    const l = document.querySelector('.formgrid .letter');
+    if (l) l.innerHTML = `<small>担保 ― ${esc(draft.partner || '相手')}さんに公開されました</small><p>${esc(draft.collateral || 'ここに担保の一言が入ります')}</p>`;
+  }
+});
+document.addEventListener('submit', e => {
+  if (e.target.id !== 'newForm') return;
+  e.preventDefault();
+  const d = {title:$('#fTitle').value.trim(), partner:$('#fPartner').value.trim(), due:$('#fDue').value, collateral:$('#fCol').value.trim(), ok:$('#fOk').checked};
+  draft = d;
+  formErr = !d.title ? '約束することを書いてください。' : !d.partner ? '約束する相手を書いてください。' : !d.due ? '期限を決めてください。'
+          : new Date(d.due) <= new Date() ? '期限は今より後にしてください。' : !d.collateral ? '担保の一言を書いてください。' : !d.ok ? '公開への同意にチェックしてください。' : '';
+  if (formErr) { renderNew(); return; }
+  const p = {id:uid(), title:d.title, partner:d.partner, due:d.due, collateral:d.collateral, status:'active', createdAt:Date.now()};
+  S.promises.push(p); sel = p.id; mode = 'view'; formErr = ''; save(); render();
+});
+setInterval(() => { if (mode === 'view' && !confirmJudge && !anim) { renderSide(); renderView(); } }, 30000);
+
+render();
+}
+</script>
+</body>
+</html>

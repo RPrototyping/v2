@@ -1,0 +1,14 @@
+# Gradle / ビルド結果
+.gradle/
+build/
+.kotlin/
+
+# 手元の環境（SDK の場所など）
+local.properties
+
+# IDE
+.idea/
+*.iml
+
+# macOS
+.DS_Store
